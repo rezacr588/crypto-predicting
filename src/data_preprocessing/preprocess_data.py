@@ -1,41 +1,46 @@
 import pandas as pd
 
-def preprocess_bitcoin_data(input_path='data/raw/bitcoin_data.csv', output_path='data/processed/processed_bitcoin_data.csv'):
-    # Load the data
-    data = pd.read_csv(input_path)
-
-    # Handle Missing Values
+def fill_missing_values(data):
+    """Fill missing values in the dataset."""
     data.fillna(method='ffill', inplace=True)
+    data['tvl'].fillna(0, inplace=True)
+    return data
 
-    # Feature Engineering
-
-    # Date Features
-    if 'timestamp' in data.columns:
-        data['date'] = pd.to_datetime(data['timestamp'])
-        data['day'] = data['date'].dt.day
-        data['month'] = data['date'].dt.month
-        data['year'] = data['date'].dt.year
-
-    # Technical Indicators
-
-    # Moving Averages
-    data['7_day_avg'] = data['price'].rolling(window=7).mean()
+def compute_moving_average(data, window=7):
+    """Compute the moving average for the Bitcoin price."""
+    data['7_day_avg'] = data['price'].rolling(window=window).mean()
     data['30_day_avg'] = data['price'].rolling(window=30).mean()
 
-    # Relative Strength Index (RSI)
-    delta = data['price'].diff()
-    gain = (delta.where(delta > 0, 0))
-    loss = (-delta.where(delta < 0, 0))
-    avg_gain = gain.rolling(window=14).mean()
-    avg_loss = loss.rolling(window=14).mean()
-    rs = avg_gain / avg_loss
-    data['rsi'] = 100 - (100 / (1 + rs))
+    return data
 
-    # Price Movement Labeling
-    data['price_movement'] = data['price'].diff().apply(lambda x: 'up' if x > 0 else ('down' if x < 0 else 'neutral'))
 
-    # Drop any rows with NaN values after feature engineering
-    data.dropna(inplace=True)
+def convert_data_types(data):
+    """Convert columns to appropriate data types."""
+    numerical_cols = ['price', 'volume_24h', 'volume_change_24h', 'percent_change_1h', 'percent_change_24h', 
+                      'percent_change_7d', 'percent_change_30d', 'percent_change_60d', 'percent_change_90d', 
+                      'market_cap', 'market_cap_dominance', 'fully_diluted_market_cap', 'tvl']
+    for col in numerical_cols:
+        data[col] = data[col].astype(float)
+    data['last_updated'] = pd.to_datetime(data['last_updated'])
+    return data
+
+def extract_date_features(data):
+    """Extract date-related features from the dataset."""
+    data['date'] = data['last_updated'].dt.date
+    data['day'] = data['last_updated'].dt.day
+    data['month'] = data['last_updated'].dt.month
+    data['year'] = data['last_updated'].dt.year
+    return data
+
+def preprocess_bitcoin_data(input_path='data/raw/bitcoin_data.csv', output_path='data/processed/processed_bitcoin_data.csv'):
+    # Load the raw data
+    data = pd.read_csv(input_path)
+
+    # Preprocessing steps
+    data = fill_missing_values(data)
+    data = convert_data_types(data)
+    data = extract_date_features(data)
+    data = compute_moving_average(data)  # Add this line
 
     # Save the processed data
     data.to_csv(output_path, index=False)

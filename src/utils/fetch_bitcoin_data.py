@@ -1,7 +1,19 @@
+import os
 import requests
 import pandas as pd
 
 def fetch_bitcoin_data(api_key, save_path='data/raw/bitcoin_data.csv'):
+    """
+    Fetches the latest Bitcoin data from CoinMarketCap and appends it to a CSV file.
+
+    Parameters:
+    - api_key (str): The API key for accessing CoinMarketCap data.
+    - save_path (str, optional): The path to the CSV file where the data will be saved. 
+                                 Defaults to 'data/raw/bitcoin_data.csv'.
+
+    Returns:
+    None
+    """
     # Define the endpoint URL to get Bitcoin data
     endpoint_url = "https://pro-api.coinmarketcap.com/v1/cryptocurrency/listings/latest"
 
@@ -21,13 +33,17 @@ def fetch_bitcoin_data(api_key, save_path='data/raw/bitcoin_data.csv'):
 
     if response.status_code == 200:
         data = response.json()
-        bitcoin_data = data['data'][0]  # Assuming Bitcoin is the first result
-        
-        # Convert the data to a Pandas DataFrame
-        df = pd.DataFrame([bitcoin_data['quote']['USD']])
-        
-        # Save the data to a CSV file
-        df.to_csv(save_path, index=False)
+        bitcoin_data = data['data'][0]  # Assuming Bitcoin is the first result       
+        # Extract relevant fields
+        btc_quote = bitcoin_data['quote']['USD']
+        btc_quote['last_updated'] = bitcoin_data['last_updated']     
+        # Convert the new data to a Pandas DataFrame
+        new_data = pd.DataFrame([btc_quote])
+
+        combined_data = new_data
+
+        # Save the combined data to the CSV file
+        combined_data.to_csv(save_path, index=False)
         print(f"Data saved successfully to {save_path}!")
     else:
         print(f"Failed to fetch data. Status code: {response.status_code}")

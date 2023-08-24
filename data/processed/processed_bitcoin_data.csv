@@ -1,1 +1,2 @@
-price,volume_24h,volume_change_24h,percent_change_1h,percent_change_24h,percent_change_7d,percent_change_30d,percent_change_60d,percent_change_90d,market_cap,market_cap_dominance,fully_diluted_market_cap,tvl,last_updated,7_day_avg,30_day_avg,rsi,price_movement
+price,volume_24h,volume_change_24h,percent_change_1h,percent_change_24h,percent_change_7d,percent_change_30d,percent_change_60d,percent_change_90d,market_cap,market_cap_dominance,fully_diluted_market_cap,tvl,last_updated,date,day,month,year,7_day_avg,30_day_avg
+26100.723631446708,16341310027.410944,-1.6328,-0.55283177,-0.05018658,-8.05461305,-10.68154468,-14.72320674,-2.57759569,508094304198.1929,48.335,548115196260.38,0.0,2023-08-24 15:24:00+00:00,2023-08-24,24,8,2023,,
