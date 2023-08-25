@@ -26,4 +26,8 @@ def feature_engineering(df):
     # Exponential Weighted Features
     df['ewm_7'] = df['price'].ewm(span=7).mean()
 
+    # Handle missing values
+    df.fillna(method='ffill', inplace=True)  # Forward fill to handle missing values
+    df.fillna(method='bfill', inplace=True)  # Backward fill for any remaining missing values
+
     return df

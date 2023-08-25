@@ -6,7 +6,6 @@ from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 from sklearn.ensemble import RandomForestRegressor
 
-
 def load_data(processed_data_path):
     """
     Load and preprocess the data for training.
@@ -18,6 +17,19 @@ def load_data(processed_data_path):
     - X_train, X_test, y_train, y_test: Training and testing data.
     """
     data = pd.read_csv(processed_data_path)
+    
+    # Convert the 'date' column to datetime format
+    data['date'] = pd.to_datetime(data['date'])
+    
+    # Extract year, month, day, and hour as separate features
+    data['year'] = data['date'].dt.year
+    data['month'] = data['date'].dt.month
+    data['day'] = data['date'].dt.day
+    data['hour'] = data['date'].dt.hour
+    
+    # Drop the original 'date' column
+    data = data.drop(columns=['date', 'last_updated'])  # Also dropping 'last_updated' if it's a similar datetime column
+    
     X = data.drop(columns=['price'])
     y = data['price']
 
@@ -26,7 +38,7 @@ def load_data(processed_data_path):
 
 def train_models(X_train, y_train):
     """
-    Train multiple regression models. If a model file exists, load it; otherwise, train a new one.
+    Always train the regression models and save them.
 
     Parameters:
     - X_train, y_train: Training data.
@@ -39,27 +51,20 @@ def train_models(X_train, y_train):
         'Random Forest': 'models/random_forest_model.pkl'
     }
 
-    models = {}
+    models = {
+        'Linear Regression': LinearRegression(),
+        'Random Forest': RandomForestRegressor(n_estimators=100, random_state=42)
+    }
 
-    for name, path in model_paths.items():
-        if os.path.exists(path):
-            with open(path, 'rb') as model_file:
-                models[name] = pickle.load(model_file)
-            print(f"{name} model loaded from {path}!")
-        else:
-            if name == 'Linear Regression':
-                models[name] = LinearRegression()
-            elif name == 'Random Forest':
-                models[name] = RandomForestRegressor(n_estimators=100, random_state=42)
+    for name, model in models.items():
+        print(f"Training {name}...")
+        model.fit(X_train, y_train)
+        print(f"{name} trained successfully!")
 
-            print(f"Training {name}...")
-            models[name].fit(X_train, y_train)
-            print(f"{name} trained successfully!")
-
-            # Save the trained model
-            with open(path, 'wb') as model_file:
-                pickle.dump(models[name], model_file)
-            print(f"{name} model saved to {path}!")
+        # Save the trained model
+        with open(model_paths[name], 'wb') as model_file:
+            pickle.dump(model, model_file)
+        print(f"{name} model saved to {model_paths[name]}!")
 
     return models
 

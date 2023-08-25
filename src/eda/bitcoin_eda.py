@@ -15,7 +15,7 @@ def plot_time_series(data):
     plt.xlabel('Date')
     plt.ylabel('Price')
     plt.grid(True)
-    plt.show()
+    # plt.show()
 
 def plot_price_distribution(data):
     """Plot the distribution of Bitcoin prices."""
@@ -25,12 +25,10 @@ def plot_price_distribution(data):
     plt.xlabel('Price')
     plt.ylabel('Frequency')
     plt.grid(True)
-    plt.show()
+    # plt.show()
 
 def plot_correlation_heatmap(data):
     """Plot a correlation heatmap for the dataset."""
-    import seaborn as sns
-    import matplotlib.pyplot as plt
 
     # Exclude non-numeric columns
     numeric_data = data.select_dtypes(include=['float64', 'int64'])
@@ -42,7 +40,7 @@ def plot_correlation_heatmap(data):
     plt.figure(figsize=(12, 10))
     sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', vmin=-1, vmax=1)
     plt.title("Correlation Heatmap")
-    plt.show()
+    # plt.show()
 
 
 def plot_outliers(data):
@@ -50,13 +48,14 @@ def plot_outliers(data):
     plt.figure(figsize=(8, 6))
     sns.boxplot(data['price'])
     plt.title('Box Plot of Bitcoin Prices')
-    plt.show()
+    # plt.show()
 
 def plot_moving_averages(data):
     """Plot short-term and long-term moving averages."""
     if '7_day_avg' not in data.columns:
         print("7_day_avg column is missing from the data. Skipping this plot.")
         return
+    
     plt.figure(figsize=(12, 6))
     plt.plot(data['date'], data['price'], label='Actual Price')
     plt.plot(data['date'], data['7_day_avg'], label='7-Day Moving Average', linestyle='--')
@@ -66,7 +65,7 @@ def plot_moving_averages(data):
     plt.ylabel('Price')
     plt.legend()
     plt.grid(True)
-    plt.show()
+    # plt.show()
 
 def perform_eda(processed_data_path):
     """
@@ -79,6 +78,7 @@ def perform_eda(processed_data_path):
     if data.empty:
         print("No data available for EDA.")
         return
+    
     # Basic Data Overview
     print("\nBasic Data Overview:")
     print(data.head())
