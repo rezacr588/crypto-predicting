@@ -1,8 +1,8 @@
 import os
-import requests
 import pandas as pd
+import requests
 
-def fetch_bitcoin_data(api_key, save_path='data/raw/bitcoin_data.csv'):
+def fetch_latest_bitcoin_data(api_key, save_path='data/raw/bitcoin_data.csv'):
     """
     Fetches the latest Bitcoin data from CoinMarketCap and appends it to a CSV file.
 
@@ -40,14 +40,18 @@ def fetch_bitcoin_data(api_key, save_path='data/raw/bitcoin_data.csv'):
         # Convert the new data to a Pandas DataFrame
         new_data = pd.DataFrame([btc_quote])
 
-        combined_data = new_data
+        # Check if the CSV file already exists
+        if os.path.exists(save_path):
+            # Read the existing data
+            existing_data = pd.read_csv(save_path)
+            # Append the new data to the existing data
+            combined_data = pd.concat([existing_data, new_data], ignore_index=True)
+        else:
+            combined_data = new_data
+
 
         # Save the combined data to the CSV file
         combined_data.to_csv(save_path, index=False)
         print(f"Data saved successfully to {save_path}!")
     else:
         print(f"Failed to fetch data. Status code: {response.status_code}")
-
-if __name__ == "__main__":
-    API_KEY = '402db71a-cbac-4ff7-8120-2053b050d2ae'
-    fetch_bitcoin_data(API_KEY)

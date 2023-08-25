@@ -19,10 +19,16 @@ def convert_data_types(data):
     numerical_cols = ['price', 'volume_24h', 'volume_change_24h', 'percent_change_1h', 'percent_change_24h', 
                       'percent_change_7d', 'percent_change_30d', 'percent_change_60d', 'percent_change_90d', 
                       'market_cap', 'market_cap_dominance', 'fully_diluted_market_cap', 'tvl']
+    
+    # Convert numerical columns to float
     for col in numerical_cols:
         data[col] = data[col].astype(float)
-    data['last_updated'] = pd.to_datetime(data['last_updated'])
+    
+    # Convert last_updated to datetime
+    data['last_updated'] = pd.to_datetime(data['last_updated'], errors='coerce')
+    
     return data
+
 
 def extract_date_features(data):
     """Extract date-related features from the dataset."""

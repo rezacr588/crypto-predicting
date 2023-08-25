@@ -9,6 +9,7 @@ def load_data(processed_data_path):
 def plot_time_series(data):
     """Plot Bitcoin price over time."""
     plt.figure(figsize=(12, 6))
+    data['date'] = pd.to_datetime(data['date'])
     plt.plot(data['date'], data['price'])
     plt.title('Bitcoin Price Over Time')
     plt.xlabel('Date')
