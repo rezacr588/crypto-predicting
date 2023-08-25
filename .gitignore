@@ -1,0 +1,5 @@
+# Ignore all files in the data directory
+data/
+
+# Ignore all .joblib files (commonly used for saving models)
+*.joblib

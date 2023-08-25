@@ -4,6 +4,7 @@ from src.utils.fetch_bitcoin_data import fetch_latest_bitcoin_data
 from src.data_preprocessing.preprocess_data import preprocess_bitcoin_data
 from src.eda.bitcoin_eda import perform_eda  # Import the EDA function
 from src.feature_engineering.feature_engineering import feature_engineering  # Import the feature engineering function
+from src.models.train import load_data, train_models, evaluate_models
 
 def main():
     # Define paths
@@ -31,6 +32,15 @@ def main():
     # Perform EDA on the engineered data
     print("Performing Exploratory Data Analysis (EDA)...")
     perform_eda(engineered_data_path)
+
+    # Load and preprocess data
+    X_train, X_test, y_train, y_test = load_data(engineered_data_path)
+
+    # Train models
+    trained_models = train_models(X_train, y_train)
+
+    # Evaluate models
+    evaluate_models(trained_models, X_test, y_test)
 
 if __name__ == "__main__":
     main()
