@@ -15,7 +15,7 @@ def plot_time_series(data):
     plt.xlabel('Date')
     plt.ylabel('Price')
     plt.grid(True)
-    # plt.show()
+    plt.show()
 
 def plot_price_distribution(data):
     """Plot the distribution of Bitcoin prices."""
@@ -25,7 +25,7 @@ def plot_price_distribution(data):
     plt.xlabel('Price')
     plt.ylabel('Frequency')
     plt.grid(True)
-    # plt.show()
+    plt.show()
 
 def plot_correlation_heatmap(data):
     """Plot a correlation heatmap for the dataset."""
@@ -40,7 +40,7 @@ def plot_correlation_heatmap(data):
     plt.figure(figsize=(12, 10))
     sns.heatmap(correlation_matrix, annot=True, cmap='coolwarm', vmin=-1, vmax=1)
     plt.title("Correlation Heatmap")
-    # plt.show()
+    plt.show()
 
 
 def plot_outliers(data):
@@ -48,7 +48,7 @@ def plot_outliers(data):
     plt.figure(figsize=(8, 6))
     sns.boxplot(data['price'])
     plt.title('Box Plot of Bitcoin Prices')
-    # plt.show()
+    plt.show()
 
 def plot_moving_averages(data):
     """Plot short-term and long-term moving averages."""
@@ -65,7 +65,7 @@ def plot_moving_averages(data):
     plt.ylabel('Price')
     plt.legend()
     plt.grid(True)
-    # plt.show()
+    plt.show()
 
 def perform_eda(processed_data_path):
     """

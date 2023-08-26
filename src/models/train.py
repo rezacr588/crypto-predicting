@@ -2,9 +2,11 @@ import os
 import pickle
 import pandas as pd
 from sklearn.model_selection import train_test_split
-from sklearn.linear_model import LinearRegression
 from sklearn.metrics import mean_squared_error
 from sklearn.ensemble import RandomForestRegressor
+from sklearn.linear_model import SGDRegressor
+from sklearn.preprocessing import StandardScaler  
+import numpy as np
 
 def load_data(processed_data_path):
     """
@@ -36,12 +38,13 @@ def load_data(processed_data_path):
     X_train, X_test, y_train, y_test = train_test_split(X, y, test_size=0.2, random_state=42)
     return X_train, X_test, y_train, y_test
 
-def train_models(X_train, y_train):
+def train_models(X_train, y_train, incremental=False):
     """
-    Always train the regression models and save them.
+    Train the regression models and save them.
 
     Parameters:
     - X_train, y_train: Training data.
+    - incremental (bool): If True, use incremental learning for regression.
 
     Returns:
     - dict: Trained models.
@@ -52,13 +55,21 @@ def train_models(X_train, y_train):
     }
 
     models = {
-        'Linear Regression': LinearRegression(),
+        'Linear Regression': SGDRegressor(learning_rate='constant', eta0=0.01, random_state=42),
         'Random Forest': RandomForestRegressor(n_estimators=100, random_state=42)
     }
 
     for name, model in models.items():
         print(f"Training {name}...")
-        model.fit(X_train, y_train)
+        if incremental and name == 'Linear Regression':
+            # Split the training data into batches for incremental learning
+            batch_size = 100  # You can adjust this value
+            for i in range(0, len(X_train), batch_size):
+                X_batch = X_train[i:i+batch_size]  # Use numpy slicing
+                y_batch = y_train.iloc[i:i+batch_size]
+                model.partial_fit(X_batch, y_batch)
+        else:
+            model.fit(X_train, y_train)
         print(f"{name} trained successfully!")
 
         # Save the trained model
@@ -68,24 +79,71 @@ def train_models(X_train, y_train):
 
     return models
 
-def evaluate_models(models, X_test, y_test):
+def evaluate_models(models, X_test):
     """
-    Evaluate trained models on test data.
+    Evaluate trained models on test data and return predictions.
 
     Parameters:
     - models (dict): Trained models.
-    - X_test, y_test: Testing data.
+    - X_test: Testing data.
 
     Returns:
-    None
+    - dict: Predictions from each model.
     """
+    predictions = {}
     for name, model in models.items():
         y_pred = model.predict(X_test)
-        mse = mean_squared_error(y_test, y_pred)
-        print(f"{name} MSE: {mse:.2f}")
+        predictions[name] = y_pred
+    return predictions
+
+def ensemble_predictions(predictions):
+    """
+    Ensemble predictions from multiple models by averaging.
+
+    Parameters:
+    - predictions (dict): Predictions from each model.
+
+    Returns:
+    - array: Averaged predictions.
+    """
+    # Ensure there are models to ensemble
+    if len(predictions) == 0:
+        raise ValueError("No predictions to ensemble.")
+    
+    # Convert predictions to numpy arrays and average them
+    return np.mean([np.array(pred) for pred in predictions.values()], axis=0)
+
+def scale_features(X_train, X_test):
+    """
+    Scale features using Standard Scaling.
+
+    Parameters:
+    - X_train: Training data.
+    - X_test: Testing data.
+
+    Returns:
+    - X_train_scaled, X_test_scaled: Scaled training and testing data.
+    """
+    scaler = StandardScaler()
+    X_train_scaled = scaler.fit_transform(X_train)
+    X_test_scaled = scaler.transform(X_test)
+    return X_train_scaled, X_test_scaled
 
 if __name__ == "__main__":
     processed_data_path = '../data/processed/processed_bitcoin_data.csv'
     X_train, X_test, y_train, y_test = load_data(processed_data_path)
-    trained_models = train_models(X_train, y_train)
-    evaluate_models(trained_models, X_test, y_test)
+    
+    # Scale the features
+    X_train, X_test = scale_features(X_train, X_test)
+    
+    trained_models = train_models(X_train, y_train, incremental=True)
+    
+    # Get predictions from each model
+    model_predictions = evaluate_models(trained_models, X_test)
+    
+    # Ensemble the predictions
+    ensemble_pred = ensemble_predictions(model_predictions)
+    
+    # Evaluate the ensemble
+    ensemble_mse = mean_squared_error(y_test, ensemble_pred)
+    print(f"Ensemble MSE: {ensemble_mse:.2f}")
