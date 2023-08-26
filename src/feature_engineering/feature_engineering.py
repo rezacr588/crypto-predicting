@@ -2,11 +2,18 @@ import pandas as pd
 import numpy as np
 
 def feature_engineering(df):
+    # Convert 'date' column to Unix timestamp
+    if 'date' in df.columns:
+        df['date'] = pd.to_datetime(df['date']).astype(int) / 10**9
+
+    # Convert 'last_updated' column to Unix timestamp
+    if 'last_updated' in df.columns:
+        df['last_updated'] = pd.to_datetime(df['last_updated']).astype(int) / 10**9
+
     # Date and Time Features
-    df['date'] = pd.to_datetime(df['date'])
-    df['day_of_week'] = df['date'].dt.dayofweek
-    df['month'] = df['date'].dt.month
-    df['year'] = df['date'].dt.year
+    df['day_of_week'] = pd.to_datetime(df['date'], unit='s').dt.dayofweek
+    df['month'] = pd.to_datetime(df['date'], unit='s').dt.month
+    df['year'] = pd.to_datetime(df['date'], unit='s').dt.year
     df['is_weekend'] = df['day_of_week'].apply(lambda x: 1 if x >= 5 else 0)
 
     # Lagged Features
@@ -29,5 +36,10 @@ def feature_engineering(df):
     # Handle missing values
     df.fillna(method='ffill', inplace=True)  # Forward fill to handle missing values
     df.fillna(method='bfill', inplace=True)  # Backward fill for any remaining missing values
+
+    # Check for any columns that still contain datetime strings
+    for col in df.columns:
+        if df[col].dtype == 'object' and df[col].str.contains('2023-08-26').any():
+            print(f"Column '{col}' still contains datetime strings!")
 
     return df
