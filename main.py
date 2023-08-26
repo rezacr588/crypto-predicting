@@ -8,82 +8,64 @@ from src.models.train import load_data, train_models, evaluate_models, ensemble_
 from sklearn.metrics import mean_squared_error
 from src.data_preprocessing.clean_data import clean_data
 
-def check_datetime_columns(df):
-    datetime_cols = []
-    for col in df.columns:
-        if df[col].dtype == 'object':
-            sample_value = df[col].iloc[0]
-            try:
-                pd.to_datetime(sample_value)
-                datetime_cols.append(col)
-            except:
-                continue
-    return datetime_cols
+# Configuration
+RAW_DATA_PATH = os.path.join('data', 'raw', 'bitcoin_data.csv')
+PROCESSED_DATA_PATH = os.path.join('data', 'processed', 'processed_bitcoin_data.csv')
+ENGINEERED_DATA_PATH = os.path.join('data', 'processed', 'engineered_bitcoin_data.csv')
+API_KEY = '402db71a-cbac-4ff7-8120-2053b050d2ae'
 
-def main():
-    # Define paths
-    raw_data_path = os.path.join('data', 'raw', 'bitcoin_data.csv')
-    processed_data_path = os.path.join('data', 'processed', 'processed_bitcoin_data.csv')
-    engineered_data_path = os.path.join('data', 'processed', 'engineered_bitcoin_data.csv')
-
-    # Fetch Bitcoin data
+def fetch_data():
     print("Fetching Bitcoin data...")
-    fetch_latest_bitcoin_data('402db71a-cbac-4ff7-8120-2053b050d2ae', raw_data_path)
+    fetch_latest_bitcoin_data(API_KEY, RAW_DATA_PATH)
     print("Data fetched successfully!")
 
-    # Preprocess the fetched data
+def preprocess():
     print("Preprocessing data...")
-    preprocess_bitcoin_data(raw_data_path, processed_data_path)
+    preprocess_bitcoin_data(RAW_DATA_PATH, PROCESSED_DATA_PATH)
     print("Data preprocessed successfully!")
 
-    # Load the preprocessed data into a DataFrame
-    df = pd.read_csv(processed_data_path)
-
-    # Clean the preprocessed data
+def clean():
+    df = pd.read_csv(PROCESSED_DATA_PATH)
     print("Cleaning data...")
     df = clean_data(df)
-    df.to_csv(processed_data_path, index=False)  # Overwrite the preprocessed data with cleaned data
+    df.to_csv(PROCESSED_DATA_PATH, index=False)
     print("Data cleaned successfully!")
 
-    # Feature Engineering on the cleaned data
+def engineer_features():
+    df = pd.read_csv(PROCESSED_DATA_PATH)
     print("Performing Feature Engineering...")
     df = feature_engineering(df)
-    df.to_csv(engineered_data_path, index=False)
+    df.to_csv(ENGINEERED_DATA_PATH, index=False)
     print("Feature Engineering completed successfully!")
 
-    # Check for datetime columns
-    datetime_columns = check_datetime_columns(df)
-    if datetime_columns:
-        print(f"Columns with datetime strings: {datetime_columns}")
-    else:
-        print("No columns with datetime strings found.")
-
-    # Perform EDA on the engineered data
+def perform_analysis():
     print("Performing Exploratory Data Analysis (EDA)...")
-    perform_eda(engineered_data_path)
+    perform_eda(ENGINEERED_DATA_PATH)
 
-    # Load and preprocess data
-    X_train, X_test, y_train, y_test = load_data(engineered_data_path)
-    
-    # Scale the features
+def train_and_evaluate():
+    X_train, X_test, y_train, y_test = load_data(ENGINEERED_DATA_PATH)
     X_train, X_test = scale_features(X_train, X_test)
-    
     trained_models = train_models(X_train, y_train, incremental=True)
-    
-    # Get predictions from each model
     model_predictions = evaluate_models(trained_models, X_train ,X_test)
-    
-    # Ensemble the predictions
     ensemble_pred = ensemble_predictions(model_predictions)
-    
-    # Evaluate the ensemble
     ensemble_mse = mean_squared_error(y_test, ensemble_pred)
     print(f"Ensemble MSE: {ensemble_mse:.2f}")
-    
-    # Predict the next day's Bitcoin price using all past data
+    return trained_models
+
+def predict(trained_models):
+    df = pd.read_csv(ENGINEERED_DATA_PATH)
     prediction = predict_next_day(trained_models, df)
     for i, pred in enumerate(prediction):
         print(f"Ensemble predicted Bitcoin price for day {i+1}: ${pred:.2f}")
+
+def main():
+    fetch_data()
+    preprocess()
+    clean()
+    engineer_features()
+    perform_analysis()
+    trained_models = train_and_evaluate()
+    predict(trained_models)
 
 if __name__ == "__main__":
     main()
