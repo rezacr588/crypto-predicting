@@ -71,7 +71,7 @@ def main():
     trained_models = train_models(X_train, y_train, incremental=True)
     
     # Get predictions from each model
-    model_predictions = evaluate_models(trained_models, X_test)
+    model_predictions = evaluate_models(trained_models, X_train ,X_test)
     
     # Ensemble the predictions
     ensemble_pred = ensemble_predictions(model_predictions)

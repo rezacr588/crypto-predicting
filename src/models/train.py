@@ -7,6 +7,7 @@ from sklearn.ensemble import RandomForestRegressor
 from sklearn.linear_model import SGDRegressor
 from sklearn.preprocessing import StandardScaler  
 import numpy as np
+from statsmodels.tsa.holtwinters import ExponentialSmoothing
 
 def load_data(processed_data_path):
     """
@@ -34,33 +35,20 @@ def train_models(X_train, y_train, incremental=False):
     TRAINED_COLUMNS = X_train.columns  # Store the column names of X_train
 
     model_paths = {
-        'Linear Regression': 'models/linear_regression_model.pkl',
-        'Random Forest': 'models/random_forest_model.pkl'
+        'Random Forest': 'models/random_forest_model.pkl',
+        'Holt-Winters': 'models/holt_winters_model.pkl'
     }
 
     models = {
-        'Linear Regression': SGDRegressor(learning_rate='constant', eta0=0.01, random_state=42),
-        'Random Forest': RandomForestRegressor(n_estimators=100, random_state=42)
+        'Random Forest': RandomForestRegressor(n_estimators=100, random_state=42),
+        'Holt-Winters': ExponentialSmoothing(y_train, trend='add', seasonal='add', seasonal_periods=12)
     }
-
-    # Convert 'last_updated' column to Unix timestamp if it exists
-    if 'last_updated' in X_train.columns:
-        X_train['last_updated'] = pd.to_datetime(X_train['last_updated']).astype(int) / 10**9
 
     for name, model in models.items():
         print(f"Training {name}...")
-        if incremental and name == 'Linear Regression':
-            batch_size = 100
-            for i in range(0, len(X_train), batch_size):
-                X_batch = X_train.iloc[i:i+batch_size]
-                y_batch = y_train.iloc[i:i+batch_size]
-                
-                # Ensure no string columns in X_batch
-                numeric_X_batch = X_batch.select_dtypes(exclude=['object'])
-                if len(numeric_X_batch.columns) != len(X_batch.columns):
-                    raise ValueError(f"X_batch contains non-numeric columns: {set(X_batch.columns) - set(numeric_X_batch.columns)}")
-                
-                model.partial_fit(numeric_X_batch, y_batch)
+        if name == 'Holt-Winters':
+            fitted_model = model.fit(optimized=True)
+            models[name] = fitted_model
         else:
             model.fit(X_train, y_train)
         print(f"{name} trained successfully!")
@@ -71,17 +59,7 @@ def train_models(X_train, y_train, incremental=False):
 
     return models
 
-def evaluate_models(trained_models, X_test):
-    """
-    Evaluate the trained models on the test data.
-
-    Parameters:
-    - trained_models (dict): Dictionary of trained models.
-    - X_test: Test data.
-
-    Returns:
-    - dict: Predictions from each model.
-    """
+def evaluate_models(trained_models, X_train, X_test):
     global TRAINED_COLUMNS
 
     # Ensure X_test has the same columns in the same order as the trained model
@@ -89,11 +67,13 @@ def evaluate_models(trained_models, X_test):
 
     model_predictions = {}
     for name, model in trained_models.items():
-        y_pred = model.predict(X_test)
+        if name == 'Holt-Winters':
+            y_pred = model.forecast(steps=len(X_test))
+        else:
+            y_pred = model.predict(X_test)
         model_predictions[name] = y_pred
 
     return model_predictions
-
 def ensemble_predictions(predictions):
     """
     Ensemble predictions from multiple models by averaging.
@@ -134,31 +114,16 @@ def scale_features(X_train, X_test):
     return X_train_scaled, X_test_scaled
 
 def predict_next_day(models, recent_data_processed):
-    """
-    Predict Bitcoin price for all the data collected.
-
-    Parameters:
-    - models (dict): Trained models.
-    - recent_data_processed (DataFrame or numpy array): Processed data.
-
-    Returns:
-    - dict: Ensemble predicted price for all the data.
-    """
     predictions = {}
-
-    # Drop the 'price' column to get the features
     X = recent_data_processed.drop(columns=['price'])
 
-    # Ensure that the features in X match the features the model was trained on
-    # This can be done by checking the number of features in X and the number of features in the model's `coef_` attribute
     for model_name, model in models.items():
-        if hasattr(model, 'coef_'):
-            if X.shape[1] != len(model.coef_):
-                raise ValueError(f"Feature mismatch for {model_name}. Model expects {len(model.coef_)} features but got {X.shape[1]}.")
-        prediction = model.predict(X)
+        if model_name == 'Holt-Winters':
+            prediction = model.forecast(steps=len(X))
+        else:
+            prediction = model.predict(X)
         predictions[model_name] = prediction
 
-    # Average the predictions from all models
     ensemble_prediction = np.mean(list(predictions.values()), axis=0)
     return ensemble_prediction
 
