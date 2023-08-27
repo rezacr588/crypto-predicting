@@ -111,7 +111,7 @@ class BitcoinPreprocessor:
         self.clean_data()
         self.feature_engineering()
         self.addDateTimeFeatures()
-        self.data.to_csv(self.output_path, index=False)
+        self.data.to_csv(self.output_path, index=True)
         print(f"Data preprocessed and saved to {self.output_path}!")
 
 if __name__ == "__main__":
