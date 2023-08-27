@@ -44,9 +44,7 @@ def predict(model: BitcoinModel):
 def main():
     fetch_data()
     preprocess()
-    perform_analysis()
-    model = train_and_evaluate()
-    predict(model)
+    predict(train_and_evaluate())
 
 if __name__ == "__main__":
     main()
