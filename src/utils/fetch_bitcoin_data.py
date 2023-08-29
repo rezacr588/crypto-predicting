@@ -55,3 +55,9 @@ def fetch_latest_bitcoin_data(api_key, save_path='data/raw/bitcoin_data.csv'):
         print(f"Data saved successfully to {save_path}!")
     else:
         print(f"Failed to fetch data. Status code: {response.status_code}")
+
+# execute the function when the file is run directly
+if __name__ == '__main__':
+    # Load the API key from the .env file
+    API_KEY = '402db71a-cbac-4ff7-8120-2053b050d2ae'
+    fetch_latest_bitcoin_data(API_KEY)

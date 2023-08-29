@@ -31,8 +31,9 @@ def train_and_evaluate():
     X_train, X_test = model.scale_features(X_train, X_test)
     model.train(X_train, y_train)
     
-    mse = model.evaluate(X_test, y_test)
-    print(f"Ensemble MSE: {mse:.2f}")
+    mse_values = model.evaluate(X_test, y_test)
+    for model_name, mse in mse_values.items():
+        print(f"{model_name} MSE: {mse:.2f}")
     return model
 
 def predict(model: BitcoinModel):
@@ -44,7 +45,7 @@ def predict(model: BitcoinModel):
 def main():
     fetch_data()
     preprocess()
-    predict(train_and_evaluate())
+    train_and_evaluate()
 
 if __name__ == "__main__":
     main()

@@ -8,11 +8,6 @@ from sklearn.linear_model import LinearRegression  # Importing Linear Regression
 from sklearn.preprocessing import StandardScaler
 import numpy as np
 from statsmodels.tsa.holtwinters import ExponentialSmoothing
-import warnings
-
-# Suppress specific warnings
-warnings.filterwarnings("ignore", category=Warning)
-warnings.filterwarnings("ignore", category=Warning, module="statsmodels")
 class BitcoinModel:
     def __init__(self, data_path):
         self.data_path = data_path
@@ -31,7 +26,6 @@ class BitcoinModel:
         X_train[numeric_cols] = self.scaler.fit_transform(X_train[numeric_cols])
         X_test[numeric_cols] = self.scaler.transform(X_test[numeric_cols])
         return X_train, X_test
-
 
     def train(self, X_train, y_train):
         self.TRAINED_COLUMNS = X_train.columns
@@ -74,8 +68,20 @@ class BitcoinModel:
 
     def evaluate(self, X_test, y_test):
         model_predictions = self.predict(X_test)
+        
+        # Dictionary to store MSE for each model
+        mse_results = {}
+        
+        # Calculate MSE for each model
+        for model_name, predictions in model_predictions.items():
+            mse_results[model_name] = mean_squared_error(y_test, predictions)
+        
+        # Calculate MSE for the ensemble
         ensemble_pred = self.ensemble_predictions(model_predictions)
-        return mean_squared_error(y_test, ensemble_pred)
+        mse_results["Ensemble"] = mean_squared_error(y_test, ensemble_pred)
+        
+        return mse_results
+
 
 if __name__ == "__main__":
     DATA_PATH = '../data/processed/processed_bitcoin_data.csv'
@@ -85,5 +91,6 @@ if __name__ == "__main__":
     X_train, X_test = model.scale_features(X_train, X_test)
     model.train(X_train, y_train)
     
-    mse = model.evaluate(X_test, y_test)
-    print(f"Ensemble MSE: {mse:.2f}")
+    mse_values = model.evaluate(X_test, y_test)
+    for model_name, mse in mse_values.items():
+        print(f"{model_name} MSE: {mse:.2f}")
