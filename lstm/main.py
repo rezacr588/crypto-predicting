@@ -13,7 +13,7 @@ data = fetch_bitcoin_prices()
 train_generator, test_generator, scaler = preprocess_data(data['close'].values, config.SEQUENCE_LENGTH)
 
 # Check if model exists, if so, load it. Otherwise, build a new one.
-model_path = "bitcoin_lstm_model.h5"
+model_path = "models/bitcoin_lstm_model.h5"
 if os.path.exists(model_path):
     model = load_model(model_path)
 else:
