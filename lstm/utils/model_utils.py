@@ -1,5 +1,3 @@
-# /bitcoin_forecaster/utils/model_utils.py
-
 from keras.models import Sequential
 from keras.layers import LSTM, Dense
 
@@ -14,7 +12,8 @@ def build_lstm_model(sequence_length):
     - model: Compiled LSTM model.
     """
     model = Sequential()
-    model.add(LSTM(50, activation='relu', input_shape=(sequence_length, 1)))
+    # Use tanh activation for LSTM
+    model.add(LSTM(50, activation='tanh', input_shape=(sequence_length, 1)))
     model.add(Dense(1))
     model.compile(optimizer='adam', loss='mse')
     return model
@@ -46,6 +45,13 @@ def predict_next_hour(model, last_sequence, scaler):
     Returns:
     - predicted_price: Predicted price for the next hour.
     """
-    predicted_scaled = model.predict(last_sequence)
+    # Scale the last_sequence
+    last_sequence_scaled = scaler.transform(last_sequence.reshape(-1, 1))
+    
+    # Reshape the last_sequence_scaled to match the input shape for LSTM
+    last_sequence_scaled = last_sequence_scaled.reshape((1, last_sequence_scaled.shape[0], 1))
+    
+    predicted_scaled = model.predict(last_sequence_scaled)
     predicted_price = scaler.inverse_transform(predicted_scaled)
     return predicted_price[0][0]
+

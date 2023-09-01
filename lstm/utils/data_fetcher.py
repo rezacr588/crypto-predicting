@@ -3,10 +3,11 @@
 import requests
 import pandas as pd
 import os
+import config
 
 def fetch_bitcoin_prices():
     # Define the endpoint URL (Cryptowatch API for hourly data)
-    url = "https://api.cryptowat.ch/markets/kraken/btcusd/ohlc"
+    url = config.API_ENDPOINT
     
     # Define the parameters: 3600 seconds for hourly data and a span of 6 months
     # Note: The 'after' parameter might need adjustments based on the exact date range you want.
@@ -35,6 +36,9 @@ def fetch_bitcoin_prices():
     df.to_csv(save_path, index=False)
     
     print(f"Data fetched and saved to '{save_path}'")
+    
+    # Return the DataFrame
+    return df
 
 if __name__ == "__main__":
     fetch_bitcoin_prices()
